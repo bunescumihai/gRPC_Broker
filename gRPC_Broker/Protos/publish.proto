@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option csharp_namespace = "gRPC_Broker_Publisher";
+
+package publish;
+
+import "Protos/definitions.proto";
+import "Protos/universal.proto";
+
+service Publisher{
+  rpc CreateUser (definitions.Credentials) returns (definitions.Response);
+  rpc PublishAnArticle (PublishArticleRequest) returns (definitions.Response);
+}
+
+message PublishArticleRequest{
+	definitions.Credentials credentials = 1;
+	definitions.Article article = 2;
+}

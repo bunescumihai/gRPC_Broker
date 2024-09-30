@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package definitions;
+
+import "google/protobuf/any.proto";
+
+message Credentials{
+	string userName = 1;
+	string password = 2;
+}
+
+message Topic{
+	string Name = 1;
+}
+
+message Article {
+	Topic topic = 1;
+	string content = 2;
+}
+
+message Response{
+	StatusCode statusCode = 1;
+	
+	oneof data {
+		Topic topic = 2;              
+		TopicList topics = 3; 
+		ArticleList articles = 4;
+		string message = 5;
+	}
+}
+
+message TopicList{
+	repeated Topic topics = 1;
+}
+
+message ArticleList{
+	repeated Article articles = 1;
+}
+
+enum UserRole {
+	Publisher = 0;
+	Subscriber = 1;
+}
+
+enum StatusCode{
+	Unspecified = 0;
+	Success = 200;
+	BadRequest = 400;
+	Forbidden = 401;
+	Unauthorized = 403;
+	NotFound = 404;
+	InternalServerError = 500;
+}
+
+message Empty {}
+

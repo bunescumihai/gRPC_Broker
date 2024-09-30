@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option csharp_namespace = "gRPC_Broker_Universal";
+
+package publish;
+
+import "Protos/definitions.proto";
+
+service Universal {
+  rpc GetTopics (definitions.Empty) returns (definitions.Response);
+}

@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option csharp_namespace = "gRPC_Broker_Subscriber";
+
+
+package subscribe;
+
+import "Protos/definitions.proto";
+import "Protos/universal.proto";
+
+service Subscriber {
+  rpc CreateUser (definitions.Credentials) returns (definitions.Response);
+  rpc SubscribeToTopic (SubscribeUnsubscribeTopicRequest) returns (definitions.Response);
+  rpc UnsubscribeFromTopic (SubscribeUnsubscribeTopicRequest) returns (definitions.Response);
+  rpc StartGettingArticles (definitions.Empty) returns (stream definitions.Response);
+}
+
+message SubscribeUnsubscribeTopicRequest {
+	definitions.Credentials credentials = 1;
+	definitions.Topic topic = 2;
+}
