@@ -12,6 +12,22 @@ namespace gRPC_Broker.Repositories.Implementations
             _dbContext = dbContext;
         }
 
+        public async Task<List<string>> GetSubscribers(TopicModel topic)
+        {
+            var projection = Builders<TopicModel>.Projection.Include(t => t.SubscribedUsers);
+            
+            var filter = Builders<TopicModel>.Filter.Eq(t => t.Name, topic.Name);
+
+            var t = await _dbContext.Topics
+                .Find(filter)
+                .Project<TopicModel>(projection) 
+                .FirstOrDefaultAsync();
+
+
+            return t.SubscribedUsers.ToList();
+
+        }
+
         public async Task<List<TopicProjection>>  GetTopics() {
             var topics = await _dbContext.Topics
                 .Find(FilterDefinition<TopicModel>.Empty)

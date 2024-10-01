@@ -1,14 +1,19 @@
 ﻿
 using Definitions;
+using gRPC_Broker.Models;
 
 namespace gRPC_Broker.Repositories;
 
 
 public interface IPublisherRepository
 {
-    Task AddAnArticle(Credentials credentials, Article article);
+    Task<ArticleModel> AddAnArticle(string userName, Article article);
 
-    Task<bool> UserExists(Credentials userModel);
+    Task<bool> PublisherExists(Credentials userModel);
 
     Task CreateUser(Credentials credentials);
+
+    Task AssignArticleToBeSend(string articleId, List<string> subscribers);
+
+
 }

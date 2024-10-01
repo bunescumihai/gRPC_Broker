@@ -8,7 +8,7 @@ using UserRole = gRPC_Broker.Definitions.UserRole;
 
 namespace gRPC_Broker.Repositories.Implementations
 {
-    public class PublisherRepository: IPublisherRepository
+    public class PublisherRepository : IPublisherRepository
     {
         private MongoDbContext _dbContext;
 
@@ -16,13 +16,6 @@ namespace gRPC_Broker.Repositories.Implementations
         {
             _dbContext = dbContext;
         }
-        
-        
-        public void SaveArticle()
-        {
-            throw new NotImplementedException();
-        }
-
 
         public async Task CreateUser(global::Definitions.Credentials credentials)
         {
@@ -39,7 +32,7 @@ namespace gRPC_Broker.Repositories.Implementations
             _dbContext.Users.InsertOne(user);
         }
 
-        public async Task<bool> UserExists(global::Definitions.Credentials credentials)
+        public async Task<bool> PublisherExists(global::Definitions.Credentials credentials)
         {
             var filter = Builders<UserModel>.Filter.And(
                 Builders<UserModel>.Filter.Eq(u => u.UserName, credentials.UserName),
@@ -55,13 +48,25 @@ namespace gRPC_Broker.Repositories.Implementations
             return false;
         }
 
-        public async Task AddAnArticle(global::Definitions.Credentials credentials, Article article)
+        public async Task<ArticleModel> AddAnArticle(string userName, Article article)
         {
-            if (!await UserExists(credentials))
-                throw new PermissionException();
+            var a = ArticleModel.GetArticleModelFromArticleMessage(userName, article);
+            await _dbContext.Articles.InsertOneAsync(a);
+            return a; 
+        }
 
-            await _dbContext.Articles.InsertOneAsync(ArticleModel.GetArticleModelFromArticleMessage(credentials.UserName, article));
+        public async Task AssignArticleToBeSend(string articleId, List<string> subscribers)
+        {
+            var filter = Builders<ToSendModel>.Filter.In(t => t.UserName, subscribers);
+
+            var update = Builders<ToSendModel>.Update
+                .AddToSet(t => t.Articles, articleId); 
+
+            var updateResult = await _dbContext.ToSend.UpdateManyAsync(filter, update);
+
+            Console.WriteLine($"{updateResult.ModifiedCount} users updated with article {articleId}");
 
         }
+
     }
 }

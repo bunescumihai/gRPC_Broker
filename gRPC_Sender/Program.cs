@@ -5,7 +5,7 @@ using gRPC_Broker_Publisher;
 using Microsoft.VisualBasic;
 using gRPC_Broker_Subscriber;
 
-using var channel = GrpcChannel.ForAddress("http://192.168.1.5:8143");
+using var channel = GrpcChannel.ForAddress("http://172.20.10.5:8143");
 
 var universalClient = new Universal.UniversalClient(channel);
 var publisherClient = new Publisher.PublisherClient(channel);

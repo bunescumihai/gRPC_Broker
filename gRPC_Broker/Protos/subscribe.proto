@@ -12,7 +12,7 @@ service Subscriber {
   rpc CreateUser (definitions.Credentials) returns (definitions.Response);
   rpc SubscribeToTopic (SubscribeUnsubscribeTopicRequest) returns (definitions.Response);
   rpc UnsubscribeFromTopic (SubscribeUnsubscribeTopicRequest) returns (definitions.Response);
-  rpc StartGettingArticles (definitions.Empty) returns (stream definitions.Response);
+  rpc StartGettingArticles (definitions.Credentials) returns (stream definitions.Response);
 }
 
 message SubscribeUnsubscribeTopicRequest {

@@ -2,7 +2,9 @@
 using Definitions;
 using Grpc.Core;
 using gRPC_Broker.Repositories;
+using gRPC_Broker.Repositories.Implementations;
 using gRPC_Broker_Subscriber;
+using MongoDB.Driver.Core.WireProtocol.Messages;
 using StatusCode = Definitions.StatusCode;
 
 namespace gRPC_Broker.Services {
@@ -22,6 +24,9 @@ namespace gRPC_Broker.Services {
             try
             {
                 await _subscriberRepository.CreateUser(request);
+
+                await _subscriberRepository.CreateToSendInstance(request.UserName);
+
                 return new Response()
                 {
                     StatusCode = StatusCode.Success,
@@ -86,7 +91,7 @@ namespace gRPC_Broker.Services {
                 if (!userExists)
                     throw new  PermissionException();
                 
-                await _subscriberRepository.UnsubscriveFromTopic(request.Credentials.UserName, request.Topic);
+                await _subscriberRepository.UnsubscribeFromTopic(request.Credentials.UserName, request.Topic);
 
                 return new Response()
                 {
@@ -112,7 +117,53 @@ namespace gRPC_Broker.Services {
             }
 
         }
-    
+        
+        public override async Task StartGettingArticles(Credentials request, IServerStreamWriter<Response> responseStream, ServerCallContext context)
+        {
+
+            try
+            {
+
+                var user = await _subscriberRepository.SubscriberExists(request);
+
+                if (!user)
+                    throw new PermissionException();
+
+
+                while(true)
+                {
+                    if (context.CancellationToken.IsCancellationRequested)
+                    {
+                        Console.WriteLine("Client disconnected. Streaming stopped.");
+                        break;
+                    }
+
+                    var articles = await _subscriberRepository.GetArticlesToSend(request.UserName);
+                    if(articles != null && articles.Count > 0)
+                    {
+                        var rs = new Response
+                        {
+                            StatusCode = StatusCode.Success,
+                            Articles = new ArticleList() { Articles = {articles} }
+                        };
+                        await responseStream.WriteAsync(rs);
+
+                    }
+
+                    await _subscriberRepository.DeleteArticlesToSend(request.UserName);
+
+                    await Task.Delay(5000); 
+                }
+            }
+            catch (RpcException ex) 
+            {
+                Console.WriteLine("Streaming was cancelled by the client.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
     
     }
 

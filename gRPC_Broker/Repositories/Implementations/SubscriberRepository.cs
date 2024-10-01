@@ -62,7 +62,7 @@ namespace gRPC_Broker.Repositories.Implementations
 
         }
 
-        public async Task UnsubscriveFromTopic(string userName, Topic topic)
+        public async Task UnsubscribeFromTopic(string userName, Topic topic)
         {
             var filter = Builders<TopicModel>.Filter.Eq(t => t.Name, topic.Name);
             var update = Builders<TopicModel>.Update.Pull(t => t.SubscribedUsers, userName);
@@ -73,5 +73,57 @@ namespace gRPC_Broker.Repositories.Implementations
                 throw new BadTopicException();
         }
 
+        public async Task CreateToSendInstance(string userName)
+        {
+            await _dbContext.ToSend.InsertOneAsync(new ToSendModel() { UserName = userName });
+        }
+
+
+        public async Task<List<Article>> GetArticlesToSend(string userName)
+        {
+            var filter = Builders<ToSendModel>.Filter.Eq(t => t.UserName, userName);
+            var projection = Builders<ToSendModel>.Projection.Include(t => t.Articles);
+
+
+
+            var t = await _dbContext.ToSend.Find(filter).Project<ToSendModel>(projection).FirstOrDefaultAsync();
+
+            var articlesId = t.Articles;
+
+            var filter2 = Builders<ArticleModel>.Filter.In(a => a.Id, articlesId);
+            var projection2 = Builders<ArticleModel>.Projection.Include(a => a.TopicModel).Include(a => a.Content);
+
+            var articles = _dbContext.Articles.Find(filter2).ToList();
+
+            foreach (var i in articles)
+            {
+                Console.WriteLine("----Article----");
+                Console.WriteLine("Topic: " + i.TopicModel.Name);
+                Console.WriteLine("Topic: " + i.Content);
+            }
+
+            List<Article> articles1 = new List<Article>();
+
+            foreach (var article in articles)
+                articles1.Add(ArticleModel.GetArticleMessageFromArticleModel(article));
+
+            return articles1;
+        }
+
+        public async Task DeleteArticlesToSend(string userName)
+        {
+            var filter = Builders<ToSendModel>.Filter.Eq(t => t.UserName, userName);
+            var update = Builders<ToSendModel>.Update.Set(t => t.Articles, new List<string>());
+
+            try
+            {
+                await _dbContext.ToSend.UpdateOneAsync(filter, update);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Something went wron while deleting what to send to: " +  ex.Message);
+            }
+
+        }
     }
 }

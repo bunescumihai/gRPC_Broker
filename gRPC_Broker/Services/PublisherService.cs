@@ -4,16 +4,19 @@ using gRPC_Broker.Repositories;
 using StatusCode = Definitions.StatusCode;
 using gRPC_Broker_Publisher;
 using Brocker.Exceptions;
+using gRPC_Broker.Models;
 
 namespace gRPC_Broker.Services
 {
     public class PublisherService : Publisher.PublisherBase
     {
         private IPublisherRepository _publisherRepository;
+        private ITopicRepository _topicRepository;
         
-        public PublisherService(IPublisherRepository publisherRepository)
+        public PublisherService(IPublisherRepository publisherRepository, ITopicRepository topicRepository)
         {
             _publisherRepository = publisherRepository;
+            _topicRepository = topicRepository;
         }
         
         public override async Task<Response> CreateUser(Credentials request, ServerCallContext context)
@@ -44,10 +47,31 @@ namespace gRPC_Broker.Services
             var credentials = request.Credentials;
             try
             {
-                await _publisherRepository.AddAnArticle(credentials, article);
+                var publisherExists = await _publisherRepository.PublisherExists(credentials);
+                
+                if (!publisherExists)
+                    throw new PermissionException();
+
+
+                var insertedArticle = await _publisherRepository.AddAnArticle(credentials.UserName, article);
+
+                if (insertedArticle is null)
+                    throw new Exception("Something went wrong saving article");
+
+                var topicSubscribers = await _topicRepository.GetSubscribers(TopicModel.GetTopicModelFromTopicMessage( article.Topic));
+
+                Console.WriteLine("Subscribers:");
+
+                foreach ( var i in topicSubscribers)
+                {
+                    Console.WriteLine(i);
+                }
+
+                await _publisherRepository.AssignArticleToBeSend(insertedArticle.Id, topicSubscribers);
+
                 return new Response()
                 {
-                    StatusCode = StatusCode.Unauthorized,
+                    StatusCode = StatusCode.Success,
                     Message = "The article was added"
                 };
             }

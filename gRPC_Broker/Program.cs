@@ -5,7 +5,7 @@ using gRPC_Broker.Services;
 using System.Net;
 
 
-string ip = "192.168.1.5";
+string ip = "192.168.0.50";
 //string ip = "172.20.10.3";
 int port = 8143;
 

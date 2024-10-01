@@ -17,6 +17,6 @@ namespace gRPC_Broker.DbContexts
         public IMongoCollection<TopicModel> Topics => _database.GetCollection<TopicModel>("Topics");
         public IMongoCollection<UserModel> Users => _database.GetCollection<UserModel>("Users");
         public IMongoCollection<ArticleModel> Articles => _database.GetCollection<ArticleModel>("Articles");
-
+        public IMongoCollection<ToSendModel> ToSend => _database.GetCollection<ToSendModel>("ToSend");
     }
 }
